@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Force dark theme with pure black background */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 142.1 76.2% 36.3%;
+    --primary-foreground: 355.7 100% 97.3%;
+
+    --secondary: 240 10% 3.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 10% 3.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 240 10% 3.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 10% 3.9%;
+    --input: 240 10% 3.9%;
+    --ring: 142.1 76.2% 36.3%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar specific colors */
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-border: 240 10% 3.9%;
+    --sidebar-accent: 240 10% 3.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-black text-white;
+  }
+
+  /* Force all backgrounds to be black */
+  div,
+  main,
+  section,
+  header,
+  footer,
+  aside,
+  nav {
+    @apply bg-black;
+  }
+
+  /* Force all cards to be black */
+  .card,
+  [class*="card-"] {
+    @apply bg-black border-zinc-800;
+  }
+
+  /* Force all inputs to have dark backgrounds */
+  input,
+  select,
+  textarea {
+    @apply bg-zinc-900 border-zinc-800 text-white;
+  }
+}
+
+.font-league-spartan {
+  font-family: var(--font-league-spartan);
+}
+
+/* Force dark scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
+
+/* Override any white backgrounds */
+.bg-white,
+.bg-background,
+.bg-gray-50 {
+  background-color: #000000 !important;
+}
+
+/* Override text colors */
+.text-black {
+  color: #ffffff !important;
+}
+
+.text-gray-700,
+.text-gray-800,
+.text-gray-900 {
+  color: #d1d5db !important; /* light gray for better readability */
+}
+
+/* Fix for mobile */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
