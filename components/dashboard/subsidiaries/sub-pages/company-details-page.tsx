@@ -9,98 +9,9 @@ import RSVPButton from "@/components/ui/rsvp-button"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { getCompanyDetails, linkInvestorToCompany, unlinkInvestorFromCompany } from "@/services/rel-vest/service"
+import { cancelRsvp, getCompanyDetails, linkInvestorToCompany, rsvpToEvent, unlinkInvestorFromCompany } from "@/services/rel-vest/service"
 import { formatDate } from "@/lib/utils"
 import { useAuth } from "@/context/authContext"
-
-// Mock API functions
-const mockApi = {
-    getCompany: async (id: string) => {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-
-        const companies = {
-            c1: {
-                id: "c1",
-                name: "TechInnovate Inc.",
-                industry: "Technology",
-                description:
-                    "Leading technology innovation company specializing in AI and machine learning solutions. We develop cutting-edge software that helps businesses automate their processes and make data-driven decisions.",
-                headquarters: "San Francisco, CA",
-                contactEmail: "contact@techinnovate.com",
-                phoneNumber: "415-555-1234",
-                website: "https://techinnovate.com",
-                status: "active",
-                createdAt: new Date("2023-01-15"),
-                updatedAt: new Date("2023-05-20"),
-            },
-            c2: {
-                id: "c2",
-                name: "GreenEnergy Solutions",
-                industry: "Renewable Energy",
-                description:
-                    "Sustainable energy solutions provider focused on solar and wind power. We help businesses and communities transition to clean energy with innovative technology and financing solutions.",
-                headquarters: "Austin, TX",
-                contactEmail: "info@greenenergy.com",
-                phoneNumber: "512-555-6789",
-                website: "https://greenenergy.com",
-                status: "active",
-                createdAt: new Date("2023-02-10"),
-                updatedAt: new Date("2023-06-15"),
-            },
-        }
-
-        return companies[id as keyof typeof companies] || null
-    },
-
-    getCompanyEvents: async (companyId: string) => {
-        await new Promise((resolve) => setTimeout(resolve, 300))
-
-        const allEvents = [
-            {
-                id: "e1",
-                title: "Annual Investor Meeting",
-                description: "Annual meeting to discuss company performance and future plans",
-                eventType: "Annual Meeting",
-                date: new Date("2023-11-15T14:00:00"),
-                location: "San Francisco Convention Center",
-                status: "upcoming",
-                companyId: "c1",
-            },
-            {
-                id: "e2",
-                title: "Q3 Earnings Webinar",
-                description: "Webinar to discuss Q3 financial results",
-                eventType: "Webinar",
-                date: new Date("2023-10-25T10:00:00"),
-                location: "Virtual",
-                status: "upcoming",
-                companyId: "c2",
-            },
-            {
-                id: "e5",
-                title: "Tech Innovation Showcase",
-                description: "Showcase of our latest AI and ML innovations",
-                eventType: "Webinar",
-                date: new Date("2023-12-01T16:00:00"),
-                location: "Virtual",
-                status: "upcoming",
-                companyId: "c1",
-            },
-        ]
-
-        return allEvents.filter((event) => event.companyId === companyId)
-    },
-
-    subscribeToCompany: async (investorId: string, companyId: string) => {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        return { success: true }
-    },
-
-    unsubscribeFromCompany: async (investorId: string) => {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        return { success: true }
-    },
-}
 
 interface CompanyDetailsPageProps {
     companyId: string
@@ -144,24 +55,18 @@ export default function CompanyDetailsPage({ companyId }: CompanyDetailsPageProp
     })
 
     const rsvpToEventMutation = useMutation({
-        mutationFn: async (eventId: string) => {
-            // 🔁 Replace this with actual API
-            await new Promise((res) => setTimeout(res, 500))
-            // return { success: true }
-        },
-        onSuccess: async () => {
-            await companyRefetch()
+        mutationFn: rsvpToEvent,
+        onSuccess:() => {
+            setProcessingId(null)
+            companyRefetch()
         },
     })
 
     const cancelRsvpMutation = useMutation({
-        mutationFn: async (eventId: string) => {
-            // 🔁 Replace this with actual API
-            await new Promise((res) => setTimeout(res, 500))
-            // return { success: true }
-        },
-        onSuccess: async () => {
-            await companyRefetch()
+        mutationFn: cancelRsvp,
+        onSuccess: () => {
+            setProcessingId(null)
+            companyRefetch()
         },
     })
 
@@ -261,12 +166,7 @@ export default function CompanyDetailsPage({ companyId }: CompanyDetailsPageProp
             <div className="flex items-center gap-4">
                 <Button onClick={() => router.back()} variant="outline" size="sm">
                     <ArrowLeft className="h-4 w-4 mr-2" />
-
                 </Button>
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">{companyData.name}</h1>
-                    <p className="text-muted-foreground">{companyData.industry}</p>
-                </div>
             </div>
             <div className="w-full">
                 <Card className="w-full shadow-lg border-0 bg-white">

@@ -14,61 +14,6 @@ import { Company } from "@/types/types"
 import { CompanyList } from "./lists/companies-list"
 
 // Mock API functions for Company Representative
-const mockCompanyApi = {
-    getCompanyStats: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        return {
-            totalCompanies: 3,
-            totalEvents: 8,
-            totalInvestors: 24,
-            upcomingEvents: 5,
-        }
-    },
-
-    getRecentEvents: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 300))
-        return [
-            {
-                id: "e1",
-                title: "Annual Investor Meeting",
-                description: "Annual meeting to discuss company performance and future plans",
-                eventType: "Annual Meeting",
-                date: new Date("2023-11-15T14:00:00"),
-                location: "San Francisco Convention Center",
-                status: "upcoming",
-                companyId: "c1",
-                companyName: "TechInnovate Inc.",
-                attendeeCount: 45,
-            },
-            {
-                id: "e2",
-                title: "Q3 Earnings Webinar",
-                description: "Webinar to discuss Q3 financial results",
-                eventType: "Webinar",
-                date: new Date("2023-10-25T10:00:00"),
-                location: "Virtual",
-                status: "upcoming",
-                companyId: "c2",
-                companyName: "GreenEnergy Solutions",
-                attendeeCount: 123,
-            },
-            {
-                id: "e3",
-                title: "Product Launch Q&A",
-                description: "Q&A session for the upcoming product launch",
-                eventType: "Q&A Session",
-                date: new Date("2023-11-05T15:30:00"),
-                location: "Virtual",
-                status: "upcoming",
-                companyId: "c3",
-                companyName: "HealthPlus Medical",
-                attendeeCount: 67,
-            },
-        ]
-    },
-}
-
-
 
 export default function RepresentativeDashboard() {
     const { user } = useAuth()

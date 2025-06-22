@@ -151,6 +151,7 @@ export const getEvents = async (
         throw err;
     }
 };
+
 export const getEventDetails = async (
     id: string
 ): Promise<Event> => {
@@ -165,6 +166,21 @@ export const getEventDetails = async (
             throw new Error("Unauthorized");
         }
         console.error(`Fetch event ${id} failed:`, err);
+        throw err;
+    }
+};
+
+export const getUpcomingEventsForInvestor = async (): Promise<Event[]> => {
+    console.log("Getting upcoming events")
+    try {
+        const response = await api.get(`/rel-vest/events/investor/upcoming-events`);
+        console.log("upcoming events fetched successfully:", response.data);
+        return response.data;
+    } catch (err: any) {
+        if (err.response?.status === 401) {
+            logout();
+            throw new Error("Unauthorized");
+        }
         throw err;
     }
 };
@@ -202,9 +218,37 @@ export const deleteEvent = async (
     }
 };
 
+export const rsvpToEvent = async (id:string) => {
+    console.log(`rsvp-ing to event ${id}...`);
+    try {
+        const response = await api.post(`/rel-vest/events/${id}/rsvp`);
+        console.log("rsvp-ed successfully:", response.data);
+    } catch (err: any) {
+        if (err.response?.status === 401) {
+            logout();
+            throw new Error("Unauthorized");
+        }
+        throw err;
+    }
+};
+
+export const cancelRsvp = async (id: string) => {
+    console.log(`canceling rsvp ${id}...`);
+    try {
+        const response = await api.delete(`/rel-vest/events/${id}/cancel-rsvp`);
+        console.log("rsvp canceled successfully:", response.data);
+    } catch (err: any) {
+        if (err.response?.status === 401) {
+            logout();
+            throw new Error("Unauthorized");
+        }
+        throw err;
+    }
+};
+
 export const getInvestorsByCompany = async(
     companyId: string
-): Promise<Investor> => {
+): Promise<Investor[]> => {
     console.log("Getting investors by company")
     try {
         const response = await api.get(`/rel-vest/investors/company/${companyId}`);
@@ -234,6 +278,22 @@ export const getInvestorById = async (): Promise<Investor> => {
     }
 };
 
+export const updateInvestor = async (data: { investorId: string, dto: Investor }): Promise<Investor> => {
+    const {dto , investorId} = data ; 
+    console.log("Updating investor...", dto);
+    try {
+        const response = await api.put(`/rel-vest/investors/${investorId}`, dto);
+        console.log("Investor updated successfully:", response.data);
+        return response.data;
+    } catch (err: any) {
+        if (err.response?.status === 401) {
+            logout();
+            throw new Error("Unauthorized");
+        }
+        console.error("Create investor failed:", err);
+        throw err;
+    }
+};
 export const createInvestor = async (dto: Investor): Promise<Investor> => {
     console.log("Creating investor...", dto);
     try {

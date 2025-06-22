@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -17,8 +17,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMutation } from "@tanstack/react-query"
 import { registerUser, loginUser, googleAuth, getRedirectRoute } from "@/services/auth/service"
 import { UserRole } from "@/types/types"
+import { useSearchParams } from 'next/navigation';
+import { toast } from "@/hooks/use-toast"; 
+
 
 export default function LoginForm() {
+  const searchParams = useSearchParams();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -63,6 +68,28 @@ export default function LoginForm() {
     },
   })
 
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error) {
+      setErrorMessage(decodeURIComponent(error));
+    }
+  }, [searchParams]);
+
+  // Trigger toast only when errorMessage is set
+  useEffect(() => {
+    if (errorMessage) {
+      toast({
+        title: "Login Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+
+      // Optional: Clean the query param
+      const url = new URL(window.location.href);
+      url.searchParams.delete("error");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [errorMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

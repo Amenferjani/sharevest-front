@@ -95,35 +95,7 @@ export default function EventManagementPage() {
             eventsRefetch();
         },
     })
-    // useEffect(() => {
-    //     const loadData = async () => {
-    //         try {
-    //             const [eventsData, companiesData] = await Promise.all([mockEventApi.getEvents(), mockEventApi.getCompanies()])
-    //             setEvents(eventsData)
-    //             setCompanies(companiesData)
-    //         } catch (error) {
-    //             console.error("Error loading data:", error)
-    //         } finally {
-    //             setLoading(false)
-    //         }
-    //     }
 
-    //     loadData()
-    // }, [])
-
-    // useEffect(() => {
-    //     const loadFilteredEvents = async () => {
-    //         try {
-    //             const companyId = selectedCompanyFilter === "all" ? undefined : selectedCompanyFilter
-    //             const eventsData = await mockEventApi.getEvents(companyId)
-    //             setEvents(eventsData)
-    //         } catch (error) {
-    //             console.error("Error loading filtered events:", error)
-    //         }
-    //     }
-
-    //     loadFilteredEvents()
-    // }, [selectedCompanyFilter])
 
     const handleCreateEvent = (e: React.FormEvent) => {
         e.preventDefault();
@@ -148,16 +120,6 @@ export default function EventManagementPage() {
         setIsOpen(false)
         setPendingId(null)
     }
-    // const handleDeleteEvent = async (eventId: string) => {
-    //     if (confirm("Are you sure you want to delete this event? This action cannot be undone.")) {
-    //         try {
-    //             await mockEventApi.deleteEvent(eventId)
-    //             setEvents((prev) => prev.filter((e) => e.id !== eventId))
-    //         } catch (error) {
-    //             console.error("Error deleting event:", error)
-    //         }
-    //     }
-    // }
     const pendingEvent = eventsData?.find((c) => c.id === pendingId)
     if (eventsLoading || companyLoading || !companyFetched || !eventsFetched) {
         return (

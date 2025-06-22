@@ -12,12 +12,25 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { addAssetToPortfolio, getMarketData } from "@/services/portfolio/service";
 import { Label } from "@/components/ui/label";
 import { Asset } from "@/types/types";
+import { createCheckoutSession } from "@/services/stripe/service";
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
 
 // Removed opportunities and filters
 
 const InvestButton = ({ portfolioId, asset }: { portfolioId: string, asset: Asset }) => {
+  const router = useRouter()
+  const {user} = useAuth()
   const [open, setOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [payment, setPayment] = useState({
+      amount: 0,
+      currency: "USD",
+      name: '',
+      userId: '',
+      email: '',
+        });
+
 
   const addAssetMutation = useMutation({
     mutationFn: addAssetToPortfolio,
@@ -29,10 +42,20 @@ const InvestButton = ({ portfolioId, asset }: { portfolioId: string, asset: Asse
     },
   });
 
+  const reqCheckoutMutation = useMutation({
+    mutationFn: createCheckoutSession,
+    onSuccess: (data) => {
+      router.push(data);
+    },
+  });
+
   const handleConfirmInvestment = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const totalInvestment = quantity * asset.currentPrice;
     addAssetMutation.mutate({ portfolioId: portfolioId, asset: { ...asset, quantity: quantity } });
+    // if(!user) return
+    // setPayment({ amount: totalInvestment , name : "amen ferjani" , userId : user.id! , email: user.email , currency : 'USD'})
+    // reqCheckoutMutation.mutate()
   };
 
   return (
@@ -263,3 +286,4 @@ export default function AssetSearchTable({ portfolioId }: { portfolioId: string 
     </div>
   );
 }
+

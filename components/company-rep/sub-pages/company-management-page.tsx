@@ -26,46 +26,6 @@ import { useAuth } from "@/context/authContext"
 import { AlertDialogHeader, AlertDialogFooter, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogOverlay, AlertDialogPortal, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { formatDate } from "@/lib/utils"
 
-//             {
-//                 id: "c1",
-//                 name: "TechInnovate Inc.",
-//                 industry: "Technology",
-//                 description: "Leading technology innovation company specializing in AI and machine learning solutions",
-//                 headquarters: "San Francisco, CA",
-//                 contactEmail: "contact@techinnovate.com",
-//                 phoneNumber: "415-555-1234",
-//                 website: "https://techinnovate.com",
-//                 status: "active",
-//                 createdAt: new Date("2023-01-15"),
-//                 updatedAt: new Date("2023-05-20"),
-//             },
-//             {
-//                 id: "c2",
-//                 name: "GreenEnergy Solutions",
-//                 industry: "Renewable Energy",
-//                 description: "Sustainable energy solutions provider focused on solar and wind power",
-//                 headquarters: "Austin, TX",
-//                 contactEmail: "info@greenenergy.com",
-//                 phoneNumber: "512-555-6789",
-//                 website: "https://greenenergy.com",
-//                 status: "active",
-//                 createdAt: new Date("2023-02-10"),
-//                 updatedAt: new Date("2023-06-15"),
-//             },
-//             {
-//                 id: "c3",
-//                 name: "HealthPlus Medical",
-//                 industry: "Healthcare",
-//                 description: "Innovative healthcare solutions and medical device manufacturing",
-//                 headquarters: "Boston, MA",
-//                 contactEmail: "contact@healthplus.com",
-//                 phoneNumber: "617-555-4321",
-//                 website: "https://healthplus.com",
-//                 status: "active",
-//                 createdAt: new Date("2023-03-05"),
-//                 updatedAt: new Date("2023-07-10"),
-//             },
-
 export default function CompanyManagementPage() {
     const { user } = useAuth()
     const [isOpen, setIsOpen] = React.useState(false)
@@ -124,21 +84,6 @@ export default function CompanyManagementPage() {
             companiesRefetch()
         }
     })
-
-    // useEffect(() => {
-    //     const loadCompanies = async () => {
-    //         try {
-    //             const data = await mockCompanyApi.getCompanies()
-    //             setCompanies(data)
-    //         } catch (error) {
-    //             console.error("Error loading companies:", error)
-    //         } finally {
-    //             setLoading(false)
-    //         }
-    //     }
-
-    //     loadCompanies()
-    // }, [])
 
     const handleCreateCompany = (e: React.FormEvent) => {
         e.preventDefault();

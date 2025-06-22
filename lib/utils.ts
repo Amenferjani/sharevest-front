@@ -79,3 +79,38 @@ export const RiskToleranceLevelModifier : Record<number, string> = {
     3 : 'high',
 }
 
+export const formatCurrency = (amount: number): string => {
+  if (amount >= 1000000000) {
+    return `$${(amount / 1000000000).toFixed(1)}B`;
+  } else if (amount >= 1000000) {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  } else if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(1)}K`;
+  }
+  return `$${amount.toLocaleString()}`;
+};
+
+export const formatPercentage = (value: number): string => {
+  return `${value >= 0 ? '+' : ''}${value}%`;
+};
+
+export const getPerformanceTier = (returnPercentage: number): string => {
+  if (returnPercentage >= 15) return 'top-performer';
+  if (returnPercentage >= 8) return 'above-average';
+  if (returnPercentage >= 3) return 'average';
+  return 'below-average';
+};
+
+export const getPerformanceColor = (value: number): string => {
+  if (value >= 3) return 'text-green-600';
+  if (value >= 1) return 'text-blue-600';
+  if (value >= 0) return 'text-gray-600';
+  return 'text-red-600';
+};
+
+export const getRiskColor = (riskScore: number): string => {
+  if (riskScore <= 4) return 'text-green-600';
+  if (riskScore <= 6) return 'text-yellow-600';
+  if (riskScore <= 8) return 'text-orange-600';
+  return 'text-red-600';
+};

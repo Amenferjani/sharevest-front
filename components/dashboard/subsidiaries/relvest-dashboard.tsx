@@ -1,185 +1,117 @@
 "use client"
 
+import { useState, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Handshake, Calendar, Building2, Users, UserPlus, Bell, ArrowUpRight } from "lucide-react"
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Handshake, Calendar, Building2, UserPlus, Eye } from "lucide-react"
 import Link from "next/link"
 import RelInvestorWizard from "./sub-pages/rel-investor-wizard"
-import { Investor } from "@/types/types"
+import { Company, Investor } from "@/types/types"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useAuth } from "@/context/authContext"
-import { createInvestor, getInvestorById } from "@/services/rel-vest/service"
+import { createInvestor, getInvestorById, getUpcomingEventsForInvestor, updateInvestor } from "@/services/rel-vest/service"
 import Loading from "@/components/ui/loading"
 import Error from "@/components/ui/error"
 import { formatDate } from "@/lib/utils"
+import EventsTable from "./tables/events-table"
 
-// Static data based on the entities
-const companies = [
-  {
-    id: "c1",
-    name: "TechInnovate Inc.",
-    industry: "Technology",
-    description: "Leading technology innovation company",
-    headquarters: "San Francisco, CA",
-    contactEmail: "contact@techinnovate.com",
-    phoneNumber: "415-555-1234",
-    website: "https://techinnovate.com",
-    status: "active",
-    createdAt: new Date("2023-01-15"),
-    updatedAt: new Date("2023-05-20"),
-  },
-  {
-    id: "c2",
-    name: "GreenEnergy Solutions",
-    industry: "Renewable Energy",
-    description: "Sustainable energy solutions provider",
-    headquarters: "Austin, TX",
-    contactEmail: "info@greenenergy.com",
-    phoneNumber: "512-555-6789",
-    website: "https://greenenergy.com",
-    status: "active",
-    createdAt: new Date("2023-02-10"),
-    updatedAt: new Date("2023-06-15"),
-  },
-  {
-    id: "c3",
-    name: "HealthPlus Medical",
-    industry: "Healthcare",
-    description: "Innovative healthcare solutions",
-    headquarters: "Boston, MA",
-    contactEmail: "contact@healthplus.com",
-    phoneNumber: "617-555-4321",
-    website: "https://healthplus.com",
-    status: "active",
-    createdAt: new Date("2023-03-05"),
-    updatedAt: new Date("2023-07-10"),
-  },
-  {
-    id: "c4",
-    name: "FinTech Innovations",
-    industry: "Financial Technology",
-    description: "Next-generation financial technology solutions",
-    headquarters: "New York, NY",
-    contactEmail: "info@fintechinnovations.com",
-    phoneNumber: "212-555-8765",
-    website: "https://fintechinnovations.com",
-    status: "active",
-    createdAt: new Date("2023-04-20"),
-    updatedAt: new Date("2023-08-05"),
-  },
-]
+function countThisQuarterCompanies(companies: Company[]): number {
+  const now = new Date()
+  const quarter = Math.floor(now.getMonth() / 3)
+  const year = now.getFullYear()
+  const start = new Date(year, quarter * 3, 1)
+  const end = new Date(year, quarter * 3 + 3, 0)
+  return companies.filter(c => new Date(c.createdAt!) >= start && new Date(c.createdAt!) <= end).length
+}
 
-const events = [
-  {
-    id: "e1",
-    title: "Annual Investor Meeting",
-    description: "Annual meeting to discuss company performance and future plans",
-    eventType: "Annual Meeting",
-    date: new Date("2023-11-15T14:00:00"),
-    location: "San Francisco Convention Center",
-    status: "upcoming",
-    companyId: "c1",
-    createdAt: new Date("2023-08-01"),
-    updatedAt: new Date("2023-08-01"),
-  },
-  {
-    id: "e2",
-    title: "Q3 Earnings Webinar",
-    description: "Webinar to discuss Q3 financial results",
-    eventType: "Webinar",
-    date: new Date("2023-10-25T10:00:00"),
-    location: "Virtual",
-    status: "upcoming",
-    companyId: "c2",
-    createdAt: new Date("2023-09-10"),
-    updatedAt: new Date("2023-09-10"),
-  },
-  {
-    id: "e3",
-    title: "Product Launch Q&A",
-    description: "Q&A session for the upcoming product launch",
-    eventType: "Q&A Session",
-    date: new Date("2023-11-05T15:30:00"),
-    location: "Virtual",
-    status: "upcoming",
-    companyId: "c3",
-    createdAt: new Date("2023-09-20"),
-    updatedAt: new Date("2023-09-20"),
-  },
-  {
-    id: "e4",
-    title: "Strategic Partnership Discussion",
-    description: "Discussion about potential strategic partnerships",
-    eventType: "Webinar",
-    date: new Date("2023-10-18T11:00:00"),
-    location: "Virtual",
-    status: "upcoming",
-    companyId: "c4",
-    createdAt: new Date("2023-09-15"),
-    updatedAt: new Date("2023-09-15"),
-  },
-]
+function UpdateInvestorModal({
+  investor,
+  onSave,
+  isLoading,
+}: {
+  investor: Investor,
+  onSave: (updated: Partial<Investor>) => void,
+  isLoading: boolean
+}) {
+  const [form, setForm] = useState({
+    name: investor.name,
+    email: investor.email,
+    phoneNumber: investor.phoneNumber || '',
+    investmentInterest: investor.investmentInterest || '',
+  })
+  const [open, setOpen] = useState(false)
 
-const investors = [
-  {
-    id: "i1",
-    userId: "u1",
-    name: "John Smith",
-    email: "john.smith@investor.com",
-    phoneNumber: "415-555-9876",
-    investmentInterest: "Technology, Renewable Energy",
-    status: "active",
-    companyId: "c1",
-    createdAt: new Date("2023-05-10"),
-    updatedAt: new Date("2023-08-15"),
-  },
-  {
-    id: "i2",
-    userId: "u2",
-    name: "Sarah Johnson",
-    email: "sarah.johnson@investor.com",
-    phoneNumber: "512-555-3456",
-    investmentInterest: "Healthcare, Financial Technology",
-    status: "active",
-    companyId: "c2",
-    createdAt: new Date("2023-06-15"),
-    updatedAt: new Date("2023-09-01"),
-  },
-  {
-    id: "i3",
-    userId: "u3",
-    name: "Michael Chen",
-    email: "michael.chen@investor.com",
-    phoneNumber: "617-555-7890",
-    investmentInterest: "Technology, Healthcare",
-    status: "active",
-    companyId: "c3",
-    createdAt: new Date("2023-07-20"),
-    updatedAt: new Date("2023-09-10"),
-  },
-  {
-    id: "i4",
-    userId: "u4",
-    name: "Emily Rodriguez",
-    email: "emily.rodriguez@investor.com",
-    phoneNumber: "212-555-2345",
-    investmentInterest: "Financial Technology, Renewable Energy",
-    status: "active",
-    companyId: "c4",
-    createdAt: new Date("2023-08-05"),
-    updatedAt: new Date("2023-09-20"),
-  },
-]
+  const isChanged = (
+    form.name !== investor.name ||
+    form.email !== investor.email ||
+    form.phoneNumber !== (investor.phoneNumber || '') ||
+    form.investmentInterest !== (investor.investmentInterest || '')
+  )
+
+  const handleChange = (field: keyof typeof form, value: string) => {
+    setForm({ ...form, [field]: value })
+  }
+
+  const handleSubmit = () => {
+    onSave(form)
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="w-full flex items-center justify-start gap-2 bg-purple-600 hover:bg-purple-700">
+          <UserPlus className="h-4 w-4" />
+          Update My Investor Profile
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Your Investor Profile</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1">
+            <Label>Name</Label>
+            <Input placeholder="Enter your name" value={form.name} onChange={e => handleChange("name", e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Email</Label>
+            <Input placeholder="Enter your email" value={form.email} onChange={e => handleChange("email", e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Phone Number</Label>
+            <Input placeholder="Enter phone number" value={form.phoneNumber} onChange={e => handleChange("phoneNumber", e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Investment Interest</Label>
+            <Input placeholder="e.g., Tech, Energy..." value={form.investmentInterest} onChange={e => handleChange("investmentInterest", e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            onClick={handleSubmit}
+            disabled={!isChanged || isLoading}
+          >
+            {isLoading && (
+              <span className="mr-2 animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+            )}
+            Save
+          </Button>
+
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 
 export default function RelVestDashboard() {
-  const { user } = useAuth();
-  // Calculate metrics
-  const activeCompanies = companies.filter((company) => company.status === "active").length
-  const upcomingEvents = events.filter((event) => event.status === "upcoming").length
-  const activeInvestors = investors.filter((investor) => investor.status === "active").length
-
+  const { user } = useAuth()
+  const rsvpSectionRef = useRef<HTMLDivElement>(null)
 
   const {
     data: investorData,
@@ -196,26 +128,39 @@ export default function RelVestDashboard() {
     refetchOnWindowFocus: false,
   })
 
-  const createRiskProfileMutation = useMutation({
-    mutationFn: createInvestor,
-    onSuccess: () => {
-      investorRefetch()
-    },
+  const {
+    data: upcomingEventsData,
+    isLoading: upcomingEventsLoading,
+    isFetched: upcomingEventsFetched,
+    error: upcomingEventsError,
+  } = useQuery({
+    queryKey: ["upcomingEvents"],
+    queryFn: getUpcomingEventsForInvestor,
+    enabled: !!user,
+    staleTime: 24 * 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   })
 
-  const handleCancel = () => {
-    console.log("cancel")
-  }
+  const createInvestorProfileMutation = useMutation({
+    mutationFn: createInvestor,
+    onSuccess: () => investorRefetch(),
+  })
 
-  const handleComplete = (dto: Investor) => {
-    createRiskProfileMutation.mutate(dto);
-  }
+  const updateInvestorProfileMutation = useMutation({
+    mutationFn: updateInvestor,
+    onSuccess: () => investorRefetch(),
+  })
 
-  if (investorLoading) return <Loading />
-  if (investorError) return <Error />
-  if (!investorFetched || !investorData) {
-    return <RelInvestorWizard onCancel={handleCancel} onComplete={handleComplete} />
-  }
+  const handleCancel = () => console.log("cancel")
+
+  const handleComplete = (dto: Investor) => createInvestorProfileMutation.mutate(dto)
+
+  if (investorLoading || upcomingEventsLoading) return <Loading />
+  if (investorError || upcomingEventsError) return <Error />
+  if (!investorFetched || !investorData) return <RelInvestorWizard onCancel={handleCancel} onComplete={handleComplete} />
+
+  const activeCompanies = investorData?.companies?.filter(c => c.status === "active").length
 
   return (
     <div className="space-y-6">
@@ -235,7 +180,7 @@ export default function RelVestDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{activeCompanies}</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-emerald-500">+2</span> from last quarter
+              <span className="text-emerald-500">{countThisQuarterCompanies(investorData.companies!)}</span> from last quarter
             </p>
           </CardContent>
         </Card>
@@ -245,18 +190,18 @@ export default function RelVestDashboard() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">Scheduled in the next 30 days</p>
+            <div className="text-2xl font-bold">{upcomingEventsData?.length}</div>
+            <p className="text-xs text-muted-foreground">Across your companies</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Investment Interest</CardTitle>
+            <CardTitle className="text-sm font-medium">My RSVP</CardTitle>
             <Handshake className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
-            <p className="text-xs text-muted-foreground">Key industry sectors</p>
+            <div className="text-2xl font-bold">{investorData.events?.length}</div>
+            <p className="text-xs text-muted-foreground">Events Participation</p>
           </CardContent>
         </Card>
       </div>
@@ -268,8 +213,8 @@ export default function RelVestDashboard() {
             <CardDescription>Events scheduled in the next 30 days</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {events.slice(0, 3).map((event) => (
+            <div className="space-y-4 max-h-[240px] overflow-y-auto pr-2">
+              {upcomingEventsData?.map((event) => (
                 <div key={event.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -286,21 +231,20 @@ export default function RelVestDashboard() {
                         {event.eventType}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(event.date)} • {event.location}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Company: {companies.find((c) => c.id === event.companyId)?.name}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{formatDate(event.date)} • {event.location}</p>
                   </div>
-                  <Button variant="outline" size="sm">
-                    RSVP
-                  </Button>
+                  <Link href={`relvest/events/${event.id}`}>
+                    <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
+                      <Eye className="h-4 w-4 mr-2" />
+                      Details
+                    </Button>
+                  </Link>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
+
         <Card className="md:col-span-3">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -315,127 +259,36 @@ export default function RelVestDashboard() {
                 Explore Companies
               </Button>
             </Link>
-            <Button className="w-full flex items-center justify-start gap-2 bg-blue-600 hover:bg-blue-700">
+            <Button
+              onClick={() => rsvpSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+              className="w-full flex items-center justify-start gap-2 bg-blue-600 hover:bg-blue-700"
+            >
               <Calendar className="h-4 w-4" />
               View My RSVP
             </Button>
-            <Button className="w-full flex items-center justify-start gap-2 bg-purple-600 hover:bg-purple-700">
-              <UserPlus className="h-4 w-4" />
-              Update My Investor Profile
-            </Button>
+            <UpdateInvestorModal
+              investor={investorData}
+              onSave={(updated) => {
+                const { companies, events, ...rest } = { ...investorData, ...updated };
+                updateInvestorProfileMutation.mutate({
+                  investorId: investorData?.id!,
+                  dto: rest,
+                });
+              }}
+              isLoading={updateInvestorProfileMutation.isPending}
+            />
+
+
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 grid-cols-1">
-        <Tabs defaultValue="companies" className="w-full">
-          {/* <TabsList className="grid grid-cols-1 mb-4"> */}
-          {/* <TabsTrigger value="companies">Companies</TabsTrigger> */}
-          {/* <TabsTrigger value="events">Events</TabsTrigger> */}
-          {/* </TabsList> */}
-
-          {/* <TabsContent value="companies">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Companies</CardTitle>
-                        <CardDescription>List of companies in the RelVest network</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b">
-                                <th className="text-left py-3 px-4 font-medium">Name</th>
-                                <th className="text-left py-3 px-4 font-medium">Industry</th>
-                                <th className="text-left py-3 px-4 font-medium">Headquarters</th>
-                                <th className="text-left py-3 px-4 font-medium">Status</th>
-                                <th className="text-left py-3 px-4 font-medium">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {companies.map((company) => (
-                                <tr key={company.id} className="border-b last:border-0">
-                                  <td className="py-3 px-4">
-                                    <div className="font-medium">{company.name}</div>
-                                    <div className="text-sm text-muted-foreground">{company.contactEmail}</div>
-                                  </td>
-                                  <td className="py-3 px-4">{company.industry}</td>
-                                  <td className="py-3 px-4">{company.headquarters}</td>
-                                  <td className="py-3 px-4">
-                                    <Badge variant={company.status === "active" ? "default" : "destructive"}>
-                                      {company.status}
-                                    </Badge>
-                                  </td>
-                                  <td className="py-3 px-4">
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                      <ArrowUpRight className="h-4 w-4" />
-                                      <span className="sr-only">View details</span>
-                                    </Button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent> */}
-          {/* <TabsContent value="events">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Events</CardTitle>
-                        <CardDescription>Upcoming and past events</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b">
-                                <th className="text-left py-3 px-4 font-medium">Title</th>
-                                <th className="text-left py-3 px-4 font-medium">Type</th>
-                                <th className="text-left py-3 px-4 font-medium">Date</th>
-                                <th className="text-left py-3 px-4 font-medium">Company</th>
-                                <th className="text-left py-3 px-4 font-medium">Status</th>
-                                <th className="text-left py-3 px-4 font-medium">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {events.map((event) => (
-                                <tr key={event.id} className="border-b last:border-0">
-                                  <td className="py-3 px-4">
-                                    <div className="font-medium">{event.title}</div>
-                                    <div className="text-sm text-muted-foreground">{event.location}</div>
-                                  </td>
-                                  <td className="py-3 px-4">{event.eventType}</td>
-                                  <td className="py-3 px-4">{formatDate(event.date)}</td>
-                                  <td className="py-3 px-4">{companies.find((c) => c.id === event.companyId)?.name}</td>
-                                  <td className="py-3 px-4">
-                                    <Badge
-                                      variant={
-                                        event.status === "upcoming"
-                                          ? "outline"
-                                          : event.status === "completed"
-                                            ? "secondary"
-                                            : "destructive"
-                                      }
-                                    >
-                                      {event.status}
-                                    </Badge>
-                                  </td>
-                                  <td className="py-3 px-4">
-                                    <Button variant="outline" size="sm">
-                                      RSVP
-                                    </Button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent> */}
-        </Tabs>
+      <div ref={rsvpSectionRef} className="grid gap-4 grid-cols-1 scroll-mt-20">
+        <Card>
+          <CardContent>
+            <EventsTable isLoading={investorLoading} events={investorData.events!} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

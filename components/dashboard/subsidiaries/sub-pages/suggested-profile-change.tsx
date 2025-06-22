@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Loader2, AlertTriangle, Shield } from "lucide-react"
 
 interface SuggestedProfileChangeProps {
-  data: string    // <— the suggestion message from your API
+  data: string 
 }
 
 export default function SuggestedProfileChange({
